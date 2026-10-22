@@ -72,6 +72,7 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
         <button class="btn" id="toevoegen">Toevoegen</button>
       </div>
       <div id="beheer"></div>
+      <input type="file" id="fotoKiezer" accept="image/*" class="hidden">
       <div class="row"><button class="btn danger" id="reset">Alle tellingen op 0 zetten</button></div>
       <p class="note">Wijzigingen zijn meteen zichtbaar op het scherm.</p>
     </details>
@@ -192,14 +193,14 @@ function verklein(bestand){
       }
       ok(data);
     };
-    img.onerror = () => { URL.revokeObjectURL(url); nok(); };
+    img.onerror = () => { URL.revokeObjectURL(url); nok(new Error("Deze afbeelding kan niet gelezen worden")); };
     img.src = url;
   });
 }
 
 function renderBeheer(lijst){
   const $b = $("beheer");
-  if ($b.contains(document.activeElement) && document.activeElement.type !== "file") return; // niet wissen terwijl je typt
+  if ($b.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return; // niet wissen terwijl je typt
   $b.textContent = "";
   lijst.forEach(g => {
     const item = document.createElement("div"); item.className = "beheer-item";
@@ -214,17 +215,10 @@ function renderBeheer(lijst){
     row.append(inp, save);
 
     const fr = document.createElement("div"); fr.className = "fotorij";
-    const kies = document.createElement("input"); kies.type = "file"; kies.accept = "image/*"; kies.className = "hidden";
     const kiesBtn = document.createElement("button"); kiesBtn.className = "btn ghost";
     kiesBtn.textContent = g.foto ? "Andere foto" : "Foto kiezen";
-    kiesBtn.onclick = () => kies.click();
-    kies.onchange = async () => {
-      const f = kies.files && kies.files[0]; if (!f) return;
-      kiesBtn.textContent = "Bezig…"; kiesBtn.disabled = true;
-      try { await update(ref(db, "groepen/" + g.id), { foto: await verklein(f) }); status(""); }
-      catch (e) { status("Foto opslaan lukte niet. Probeer een kleinere afbeelding of controleer de databaseregels."); kiesBtn.textContent = "Foto kiezen"; kiesBtn.disabled = false; }
-    };
-    fr.append(miniFoto(g.foto), kiesBtn, kies);
+    kiesBtn.onclick = () => { fotoVoor = g.id; kiezer.click(); };
+    fr.append(miniFoto(g.foto), kiesBtn);
     if (g.foto){
       const weg = document.createElement("button"); weg.className = "btn ghost"; weg.textContent = "Foto weghalen";
       weg.onclick = () => remove(ref(db, "groepen/" + g.id + "/foto")).catch(fout);
@@ -240,6 +234,23 @@ function renderBeheer(lijst){
     item.append(row, fr); $b.appendChild(item);
   });
 }
+
+const kiezer = $("fotoKiezer");
+let fotoVoor = null;
+kiezer.onchange = async () => {
+  const f = kiezer.files && kiezer.files[0];
+  const id = fotoVoor;
+  kiezer.value = "";
+  if (!f || !id) return;
+  status("Foto wordt opgeslagen…");
+  try {
+    const data = await verklein(f);
+    await update(ref(db, "groepen/" + id), { foto: data });
+    status("");
+  } catch (e) {
+    status("Foto opslaan lukte niet: " + ((e && (e.code || e.message)) || "onbekende fout"));
+  }
+};
 
 async function toevoegen(){
   const v = $("nieuw").value.trim(); if (!v) return;
