@@ -1,0 +1,23 @@
+:root{
+  --bg:#16245C; --surface:#1F2F72; --line:#2E3F88; --ink:#FFF8E6; --muted:#A9B4E0;
+  --accent:#FFC23D; --accent-ink:#16245C; --bar:#3E54AE; --minus:#FF7A5C;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root.volgt-thema{
+    --bg:#FFF8E6; --surface:#FFFFFF; --line:#E4DCC6; --ink:#16245C; --muted:#5D6894;
+    --accent:#F2B21B; --accent-ink:#16245C; --bar:#C9D1F0; --minus:#D9482B;
+    color-scheme:light;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,sans-serif;font-size:17px;line-height:1.45}
+h1,h2,.num{font-family:"Big Shoulders Display","Arial Narrow",Impact,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}

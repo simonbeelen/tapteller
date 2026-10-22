@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "groepen": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      "$id": {
+        ".validate": "newData.hasChildren(['naam', 'aantal'])",
+        "naam":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "aantal": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "t":      { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "admins": {
+      "$uid": { ".read": "auth != null && auth.uid === $uid" }
+    }
+  }
+}

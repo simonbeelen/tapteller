@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tapteller – klassement</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍻</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+body{overflow:hidden}
+.scherm{height:100%;padding:3vh 4vw 2vh;display:flex;flex-direction:column}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:2vw}
+h1{font-size:clamp(2.4rem,6.5vw,7rem);line-height:.85;margin:0;font-weight:900}
+h1 span{display:block;font-size:.42em;font-weight:600;color:var(--muted)}
+.total{text-align:right}
+.total .num{font-size:clamp(2.4rem,6vw,6.5rem);font-weight:900;line-height:.85;font-variant-numeric:tabular-nums;color:var(--accent)}
+.total div:last-child{color:var(--muted);font-size:clamp(.9rem,1.4vw,1.4rem)}
+
+/* vertical bar chart */
+.chart{flex:1;min-height:0;display:flex;align-items:stretch;gap:clamp(8px,1.6vw,28px);margin-top:4vh;border-bottom:4px solid var(--line)}
+.col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;position:relative}
+.col .c{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;text-align:center;font-size:clamp(1.6rem,4vw,5rem);line-height:1;margin-bottom:.8vh;font-variant-numeric:tabular-nums}
+.col .bar{background:var(--bar);border-radius:12px 12px 0 0;height:0;transition:height .9s cubic-bezier(.2,.9,.2,1);min-height:6px}
+.col.lead .bar{background:var(--accent)}
+.col.lead .c{color:var(--accent)}
+.col.flash .bar{animation:flash 1s ease-out}
+@keyframes flash{0%{filter:brightness(1.6)}100%{filter:none}}
+.names{display:flex;gap:clamp(8px,1.6vw,28px);padding-top:1.4vh}
+.names div{flex:1 1 0;min-width:0;text-align:center;font-weight:700;font-size:clamp(.9rem,1.8vw,2.1rem);line-height:1.1;overflow-wrap:anywhere}
+.names .rank{display:block;color:var(--muted);font-weight:600;font-size:.7em}
+.names .lead .rank{color:var(--accent)}
+footer{display:flex;justify-content:space-between;align-items:center;margin-top:2vh;color:var(--muted)}
+footer button{background:transparent;border:2px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--muted)}
+.leeg{margin:auto;font-size:clamp(1.2rem,2.4vw,2rem);color:var(--muted);text-align:center;max-width:30ch}
+</style>
+</head>
+<body>
+<main class="scherm">
+  <header>
+    <h1><span id="evenement"></span>Klassement</h1>
+    <div class="total"><div class="num" id="total">0</div><div>consumpties in totaal</div></div>
+  </header>
+  <div class="chart" id="chart"></div>
+  <div class="names" id="names"></div>
+  <footer>
+    <span id="clock"></span>
+    <button id="fsBtn">Volledig scherm</button>
+  </footer>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { firebaseConfig, evenement } from "./config.js";
+
+document.getElementById("evenement").textContent = evenement;
+const $chart = document.getElementById("chart");
+const $names = document.getElementById("names");
+let vorige = {};
+
+function render(groepen){
+  const lijst = Object.entries(groepen || {}).map(([id, g]) => ({ id, naam: g.naam || "?", aantal: g.aantal | 0 }));
+  lijst.sort((a, b) => (b.aantal - a.aantal) || a.naam.localeCompare(b.naam));
+  document.getElementById("total").textContent = lijst.reduce((s, g) => s + g.aantal, 0);
+
+  if (!lijst.length){
+    $chart.innerHTML = '<p class="leeg">Nog geen groepen. Voeg ze toe via de adminpagina.</p>';
+    $names.textContent = ""; vorige = {}; return;
+  }
+  $chart.querySelector(".leeg")?.remove();
+
+  const max = Math.max(1, ...lijst.map(g => g.aantal));
+  const bestaand = {};
+  $chart.querySelectorAll(".col").forEach(c => bestaand[c.dataset.id] = c);
+  $names.textContent = "";
+
+  lijst.forEach((g, i) => {
+    let col = bestaand[g.id];
+    if (!col){
+      col = document.createElement("div"); col.className = "col"; col.dataset.id = g.id;
+      col.innerHTML = '<div class="c"></div><div class="bar"></div>';
+    }
+    delete bestaand[g.id];
+    const lead = i === 0 && g.aantal > 0;
+    col.classList.toggle("lead", lead);
+    col.querySelector(".c").textContent = g.aantal;
+    const bar = col.querySelector(".bar");
+    // leave room for the number above the tallest bar
+    requestAnimationFrame(() => bar.style.height = `calc(${(g.aantal / max) * 100}% - ${g.aantal ? "6vh" : "0px"})`);
+    if (vorige[g.id] !== undefined && g.aantal > vorige[g.id]){
+      col.classList.remove("flash"); void col.offsetWidth; col.classList.add("flash");
+    }
+    $chart.appendChild(col);
+
+    const n = document.createElement("div");
+    if (lead) n.className = "lead";
+    const r = document.createElement("span"); r.className = "rank"; r.textContent = "#" + (i + 1);
+    n.append(r, document.createTextNode(g.naam));
+    $names.appendChild(n);
+  });
+  Object.values(bestaand).forEach(c => c.remove());
+  vorige = Object.fromEntries(lijst.map(g => [g.id, g.aantal]));
+}
+
+try {
+  const db = getDatabase(initializeApp(firebaseConfig));
+  onValue(ref(db, "groepen"), s => render(s.val()),
+    () => { $chart.innerHTML = '<p class="leeg">Geen verbinding met de database. Controleer config.js en de regels.</p>'; });
+} catch (e) {
+  $chart.innerHTML = '<p class="leeg">Firebase is nog niet ingesteld. Vul config.js in.</p>';
+}
+
+const tick = () => document.getElementById("clock").textContent =
+  new Date().toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" });
+tick(); setInterval(tick, 15000);
+
+document.getElementById("fsBtn").onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+};
+</script>
+</body>
+</html>

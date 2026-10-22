@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="nl" class="volgt-thema">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Tapteller – admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍻</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
+h1{font-size:2.4rem;line-height:1;margin:16px 0 4px;font-weight:900}
+.sub{color:var(--muted);margin:0 0 20px}
+.status{padding:12px 14px;border-radius:12px;background:var(--surface);border:2px solid var(--line);margin-bottom:16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+form,.stack{display:flex;flex-direction:column;gap:10px}
+input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.btn{padding:12px 16px;border-radius:12px;border:0;background:var(--ink);color:var(--bg);font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.btn.danger{background:transparent;color:var(--minus);border:2px solid var(--line)}
+.groups{display:flex;flex-direction:column;gap:10px}
+.g{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 10px 10px 16px}
+.g .name{font-weight:700;font-size:1.15rem;overflow-wrap:anywhere}
+.g .count{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;font-size:2rem;min-width:2.5ch;text-align:right;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:6px}
+.minus{width:48px;height:64px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--minus);font-size:1.6rem;font-weight:700}
+.minus:disabled{opacity:.35}
+.plus{width:84px;height:64px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-family:"Big Shoulders Display",Impact,sans-serif;font-size:2rem;font-weight:900;transition:transform .08s}
+.plus:active{transform:scale(.94)}
+.leeg{padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px;color:var(--muted)}
+details{margin-top:28px;border-top:2px solid var(--line);padding-top:12px}
+summary{font-weight:700;cursor:pointer;padding:8px 0}
+.row{display:flex;gap:6px;align-items:center;margin:8px 0}
+.row input{flex:1;min-width:0}
+.note{color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <h1>Tapteller</h1>
+      <p class="sub" id="sub">Log in als admin om te tellen en groepen te beheren.</p>
+    </div>
+    <button class="btn ghost hidden" id="logout">Uitloggen</button>
+  </div>
+  <div class="status hidden" id="status"></div>
+
+  <form id="login" class="hidden">
+    <input type="email" id="email" placeholder="E-mailadres" autocomplete="username" required>
+    <input type="password" id="pw" placeholder="Wachtwoord" autocomplete="current-password" required>
+    <button class="btn" type="submit">Inloggen</button>
+  </form>
+
+  <section id="app" class="hidden">
+    <div class="groups" id="groups"></div>
+
+    <details>
+      <summary>Groepen beheren</summary>
+      <div class="row">
+        <input id="nieuw" placeholder="Naam van de groep" maxlength="40" autocomplete="off">
+        <button class="btn" id="toevoegen">Toevoegen</button>
+      </div>
+      <div id="beheer"></div>
+      <div class="row"><button class="btn danger" id="reset">Alle tellingen op 0 zetten</button></div>
+      <p class="note">Wijzigingen zijn meteen zichtbaar op het scherm.</p>
+    </details>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, get, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { firebaseConfig } from "./config.js";
+
+const $ = id => document.getElementById(id);
+const status = msg => { $("status").textContent = msg || ""; $("status").classList.toggle("hidden", !msg); };
+
+let app, db, auth;
+try {
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app); auth = getAuth(app);
+} catch (e) {
+  status("Firebase is nog niet ingesteld. Vul config.js in.");
+  throw e;
+}
+
+let groepen = {};
+let stopLuisteren = null;
+
+onAuthStateChanged(auth, async user => {
+  stopLuisteren?.(); stopLuisteren = null;
+  $("logout").classList.toggle("hidden", !user);
+  if (!user){
+    $("login").classList.remove("hidden"); $("app").classList.add("hidden");
+    $("sub").textContent = "Log in als admin om te tellen en groepen te beheren.";
+    return;
+  }
+  $("login").classList.add("hidden");
+  let isAdmin = false;
+  try { isAdmin = (await get(ref(db, "admins/" + user.uid))).val() === true; } catch (e) {}
+  if (!isAdmin){
+    status("Dit account is geen admin. Voeg deze UID toe onder ‘admins’ in de database: " + user.uid);
+    return;
+  }
+  status("");
+  $("sub").textContent = "Tik op +1 bij elke consumptie die een groep haalt.";
+  $("app").classList.remove("hidden");
+  stopLuisteren = onValue(ref(db, "groepen"), s => { groepen = s.val() || {}; render(); },
+    () => status("Verbinding verbroken. Herlaad de pagina."));
+});
+
+$("login").addEventListener("submit", async e => {
+  e.preventDefault();
+  try { await signInWithEmailAndPassword(auth, $("email").value.trim(), $("pw").value); status(""); }
+  catch (err) { status("Inloggen lukte niet. Controleer je e-mailadres en wachtwoord."); }
+});
+$("logout").onclick = () => signOut(auth);
+
+const fout = () => status("Opslaan lukte niet. Controleer je verbinding.");
+
+function tel(id, delta){
+  if (delta < 0 && !(groepen[id]?.aantal > 0)) return;
+  update(ref(db), { [`groepen/${id}/aantal`]: increment(delta) }).catch(fout);
+}
+
+function gesorteerd(){
+  return Object.entries(groepen).map(([id, g]) => ({ id, ...g }))
+    .sort((a, b) => (a.t || 0) - (b.t || 0));
+}
+
+function render(){
+  const lijst = gesorteerd();
+  const $g = $("groups"); $g.textContent = "";
+  if (!lijst.length){
+    const e = document.createElement("div"); e.className = "leeg";
+    e.textContent = "Nog geen groepen. Open ‘Groepen beheren’ hieronder en voeg de eerste toe.";
+    $g.appendChild(e);
+  }
+  lijst.forEach(g => {
+    const row = document.createElement("div"); row.className = "g";
+    const n = document.createElement("div"); n.className = "name"; n.textContent = g.naam;
+    const c = document.createElement("div"); c.className = "count"; c.textContent = g.aantal | 0;
+    const b = document.createElement("div"); b.className = "btns";
+    const m = document.createElement("button"); m.className = "minus"; m.textContent = "−";
+    m.setAttribute("aria-label", "Eén terug voor " + g.naam); m.disabled = !(g.aantal > 0);
+    m.onclick = () => tel(g.id, -1);
+    const p = document.createElement("button"); p.className = "plus"; p.textContent = "+1";
+    p.setAttribute("aria-label", "Eén consumptie voor " + g.naam);
+    p.onclick = () => tel(g.id, 1);
+    b.append(m, p); row.append(n, c, b); $g.appendChild(row);
+  });
+  renderBeheer(lijst);
+}
+
+function renderBeheer(lijst){
+  const $b = $("beheer");
+  if ($b.contains(document.activeElement)) return; // niet wissen terwijl je typt
+  $b.textContent = "";
+  lijst.forEach(g => {
+    const row = document.createElement("div"); row.className = "row";
+    const inp = document.createElement("input"); inp.value = g.naam; inp.maxLength = 40;
+    inp.setAttribute("aria-label", "Naam van " + g.naam);
+    const save = document.createElement("button"); save.className = "btn ghost"; save.textContent = "Opslaan";
+    save.onclick = () => {
+      const v = inp.value.trim(); if (!v || v === g.naam) return;
+      update(ref(db, "groepen/" + g.id), { naam: v }).then(() => inp.blur()).catch(fout);
+    };
+    const del = document.createElement("button"); del.className = "btn danger"; del.textContent = "Verwijderen";
+    del.onclick = () => {
+      if (confirm(`‘${g.naam}’ verwijderen? De telling van deze groep verdwijnt.`))
+        remove(ref(db, "groepen/" + g.id)).catch(fout);
+    };
+    row.append(inp, save, del); $b.appendChild(row);
+  });
+}
+
+async function toevoegen(){
+  const v = $("nieuw").value.trim(); if (!v) return;
+  try { await push(ref(db, "groepen"), { naam: v, aantal: 0, t: Date.now() }); $("nieuw").value = ""; }
+  catch (e) { fout(); }
+}
+$("toevoegen").onclick = toevoegen;
+$("nieuw").addEventListener("keydown", e => { if (e.key === "Enter") toevoegen(); });
+
+$("reset").onclick = () => {
+  if (!confirm("Alle tellingen op 0 zetten? Dit kan niet ongedaan gemaakt worden.")) return;
+  const u = {};
+  Object.keys(groepen).forEach(id => u[`groepen/${id}/aantal`] = 0);
+  update(ref(db), u).catch(fout);
+};
+</script>
+</body>
+</html>
