@@ -70,8 +70,20 @@ const $logo = document.getElementById("logo");
 const $ev = document.getElementById("evenement");
 $ev.textContent = cfg.evenement || "";
 $logo.alt = cfg.evenement || "Logo";
-$logo.onerror = () => { $logo.classList.add("hidden"); $ev.classList.remove("hidden"); };
-if (cfg.logo) $logo.src = cfg.logo; else $logo.onerror();
+let logoUitDb = "";
+function toonTekst(){ $logo.classList.add("hidden"); $ev.classList.remove("hidden"); }
+function toonLogo(src){ $ev.classList.add("hidden"); $logo.classList.remove("hidden"); $logo.src = src; }
+$logo.onerror = () => {
+  // logo uit de database kapot? probeer het bestand uit config.js, anders tekst
+  if (logoUitDb && $logo.src.startsWith("data:") && cfg.logo) { logoUitDb = ""; toonLogo(cfg.logo); }
+  else toonTekst();
+};
+function zetLogo(){
+  if (logoUitDb) toonLogo(logoUitDb);
+  else if (cfg.logo) toonLogo(cfg.logo);
+  else toonTekst();
+}
+zetLogo();
 const $chart = document.getElementById("chart");
 const $names = document.getElementById("names");
 let vorige = {};
@@ -129,6 +141,11 @@ function render(groepen){
 
 try {
   const db = getDatabase(initializeApp(firebaseConfig));
+  onValue(ref(db, "instellingen/logo"), s => {
+    const v = s.val();
+    logoUitDb = typeof v === "string" && v.startsWith("data:image/") ? v : "";
+    zetLogo();
+  }, () => {});
   onValue(ref(db, "groepen"), s => render(s.val()),
     () => { $chart.innerHTML = '<p class="leeg">Geen verbinding met de database. Controleer config.js en de regels.</p>'; });
 } catch (e) {
