@@ -36,6 +36,13 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
 .row{display:flex;gap:6px;align-items:center;margin:8px 0}
 .row input{flex:1;min-width:0}
 .note{color:var(--muted);font-size:.9rem}
+.beheer-item{border:2px solid var(--line);border-radius:16px;padding:10px;margin:10px 0;background:var(--surface)}
+.beheer-item .row{margin:0}
+.fotorij{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.mini{width:48px;height:48px;border-radius:50%;background:#fff center/cover no-repeat;border:2px solid var(--line);flex:none}
+.mini.geen{background:transparent;border-style:dashed}
+.g{grid-template-columns:auto 1fr auto auto}
+.g .mini{width:40px;height:40px}
 </style>
 </head>
 <body>
@@ -143,6 +150,7 @@ function render(){
   }
   lijst.forEach(g => {
     const row = document.createElement("div"); row.className = "g";
+    const th = miniFoto(g.foto);
     const n = document.createElement("div"); n.className = "name"; n.textContent = g.naam;
     const c = document.createElement("div"); c.className = "count"; c.textContent = g.aantal | 0;
     const b = document.createElement("div"); b.className = "btns";
@@ -152,16 +160,49 @@ function render(){
     const p = document.createElement("button"); p.className = "plus"; p.textContent = "+1";
     p.setAttribute("aria-label", "Eén consumptie voor " + g.naam);
     p.onclick = () => tel(g.id, 1);
-    b.append(m, p); row.append(n, c, b); $g.appendChild(row);
+    b.append(m, p); row.append(th, n, c, b); $g.appendChild(row);
   });
   renderBeheer(lijst);
 }
 
+function miniFoto(foto){
+  const d = document.createElement("div");
+  d.className = "mini" + (foto ? "" : " geen");
+  if (foto && foto.startsWith("data:image/")) d.style.backgroundImage = 'url("' + foto.replace(/"/g, "") + '")';
+  return d;
+}
+
+// Verklein een gekozen afbeelding tot max. 320 px, zodat ze klein genoeg is voor de database.
+function verklein(bestand){
+  return new Promise((ok, nok) => {
+    const url = URL.createObjectURL(bestand);
+    const img = new Image();
+    img.onload = () => {
+      const max = 320;
+      const schaal = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * schaal), h = Math.round(img.height * schaal);
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      let data = cv.toDataURL("image/png");          // behoudt transparantie (logo’s)
+      if (data.length > 350000){                      // te groot: jpg met witte achtergrond
+        const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h;
+        const c2 = cv2.getContext("2d"); c2.fillStyle = "#fff"; c2.fillRect(0, 0, w, h); c2.drawImage(cv, 0, 0);
+        data = cv2.toDataURL("image/jpeg", 0.85);
+      }
+      ok(data);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); nok(); };
+    img.src = url;
+  });
+}
+
 function renderBeheer(lijst){
   const $b = $("beheer");
-  if ($b.contains(document.activeElement)) return; // niet wissen terwijl je typt
+  if ($b.contains(document.activeElement) && document.activeElement.type !== "file") return; // niet wissen terwijl je typt
   $b.textContent = "";
   lijst.forEach(g => {
+    const item = document.createElement("div"); item.className = "beheer-item";
     const row = document.createElement("div"); row.className = "row";
     const inp = document.createElement("input"); inp.value = g.naam; inp.maxLength = 40;
     inp.setAttribute("aria-label", "Naam van " + g.naam);
@@ -170,12 +211,33 @@ function renderBeheer(lijst){
       const v = inp.value.trim(); if (!v || v === g.naam) return;
       update(ref(db, "groepen/" + g.id), { naam: v }).then(() => inp.blur()).catch(fout);
     };
-    const del = document.createElement("button"); del.className = "btn danger"; del.textContent = "Verwijderen";
+    row.append(inp, save);
+
+    const fr = document.createElement("div"); fr.className = "fotorij";
+    const kies = document.createElement("input"); kies.type = "file"; kies.accept = "image/*"; kies.className = "hidden";
+    const kiesBtn = document.createElement("button"); kiesBtn.className = "btn ghost";
+    kiesBtn.textContent = g.foto ? "Andere foto" : "Foto kiezen";
+    kiesBtn.onclick = () => kies.click();
+    kies.onchange = async () => {
+      const f = kies.files && kies.files[0]; if (!f) return;
+      kiesBtn.textContent = "Bezig…"; kiesBtn.disabled = true;
+      try { await update(ref(db, "groepen/" + g.id), { foto: await verklein(f) }); status(""); }
+      catch (e) { status("Foto opslaan lukte niet. Probeer een kleinere afbeelding of controleer de databaseregels."); kiesBtn.textContent = "Foto kiezen"; kiesBtn.disabled = false; }
+    };
+    fr.append(miniFoto(g.foto), kiesBtn, kies);
+    if (g.foto){
+      const weg = document.createElement("button"); weg.className = "btn ghost"; weg.textContent = "Foto weghalen";
+      weg.onclick = () => remove(ref(db, "groepen/" + g.id + "/foto")).catch(fout);
+      fr.appendChild(weg);
+    }
+    const del = document.createElement("button"); del.className = "btn danger"; del.textContent = "Groep verwijderen";
     del.onclick = () => {
       if (confirm(`‘${g.naam}’ verwijderen? De telling van deze groep verdwijnt.`))
         remove(ref(db, "groepen/" + g.id)).catch(fout);
     };
-    row.append(inp, save, del); $b.appendChild(row);
+    fr.appendChild(del);
+
+    item.append(row, fr); $b.appendChild(item);
   });
 }
 
