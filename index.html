@@ -13,8 +13,10 @@
 body{overflow:hidden}
 .scherm{height:100%;padding:3vh 4vw 2vh;display:flex;flex-direction:column}
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:2vw}
+.kop{display:flex;align-items:flex-end;gap:2.4vw;min-width:0}
+.kop img{display:block;height:clamp(70px,16vh,190px);width:auto;max-width:40vw;object-fit:contain}
+.kop .tekst{font-family:"Big Shoulders Display",Impact,sans-serif;font-size:clamp(1.4rem,3vw,3.2rem);font-weight:800;color:var(--muted);line-height:1}
 h1{font-size:clamp(2.4rem,6.5vw,7rem);line-height:.85;margin:0;font-weight:900}
-h1 span{display:block;font-size:.42em;font-weight:600;color:var(--muted)}
 .total{text-align:right}
 .total .num{font-size:clamp(2.4rem,6vw,6.5rem);font-weight:900;line-height:.85;font-variant-numeric:tabular-nums;color:var(--accent)}
 .total div:last-child{color:var(--muted);font-size:clamp(.9rem,1.4vw,1.4rem)}
@@ -23,6 +25,9 @@ h1 span{display:block;font-size:.42em;font-weight:600;color:var(--muted)}
 .chart{flex:1;min-height:0;display:flex;align-items:stretch;gap:clamp(8px,1.6vw,28px);margin-top:4vh;border-bottom:4px solid var(--line)}
 .col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;position:relative}
 .col .c{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;text-align:center;font-size:clamp(1.6rem,4vw,5rem);line-height:1;margin-bottom:.8vh;font-variant-numeric:tabular-nums}
+.col .foto{width:min(100%,clamp(56px,9vh,130px));aspect-ratio:1;margin:0 auto .8vh;border-radius:50%;background:#fff center/cover no-repeat;border:4px solid var(--bar);flex:none}
+.col.lead .foto{border-color:var(--accent)}
+.col .foto.geen{display:none}
 .col .bar{background:var(--bar);border-radius:12px 12px 0 0;height:0;transition:height .9s cubic-bezier(.2,.9,.2,1);min-height:6px}
 .col.lead .bar{background:var(--accent)}
 .col.lead .c{color:var(--accent)}
@@ -40,7 +45,11 @@ footer button{background:transparent;border:2px solid var(--line);border-radius:
 <body>
 <main class="scherm">
   <header>
-    <h1><span id="evenement"></span>Klassement</h1>
+    <div class="kop">
+      <img id="logo" alt="">
+      <span class="tekst hidden" id="evenement"></span>
+      <h1>Klassement</h1>
+    </div>
     <div class="total"><div class="num" id="total">0</div><div>consumpties in totaal</div></div>
   </header>
   <div class="chart" id="chart"></div>
@@ -54,15 +63,21 @@ footer button{background:transparent;border:2px solid var(--line);border-radius:
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { firebaseConfig, evenement } from "./config.js";
+import * as cfg from "./config.js";
+const { firebaseConfig } = cfg;
 
-document.getElementById("evenement").textContent = evenement;
+const $logo = document.getElementById("logo");
+const $ev = document.getElementById("evenement");
+$ev.textContent = cfg.evenement || "";
+$logo.alt = cfg.evenement || "Logo";
+$logo.onerror = () => { $logo.classList.add("hidden"); $ev.classList.remove("hidden"); };
+if (cfg.logo) $logo.src = cfg.logo; else $logo.onerror();
 const $chart = document.getElementById("chart");
 const $names = document.getElementById("names");
 let vorige = {};
 
 function render(groepen){
-  const lijst = Object.entries(groepen || {}).map(([id, g]) => ({ id, naam: g.naam || "?", aantal: g.aantal | 0 }));
+  const lijst = Object.entries(groepen || {}).map(([id, g]) => ({ id, naam: g.naam || "?", aantal: g.aantal | 0, foto: typeof g.foto === "string" && g.foto.startsWith("data:image/") ? g.foto : "" }));
   lijst.sort((a, b) => (b.aantal - a.aantal) || a.naam.localeCompare(b.naam));
   document.getElementById("total").textContent = lijst.reduce((s, g) => s + g.aantal, 0);
 
@@ -73,6 +88,7 @@ function render(groepen){
   $chart.querySelector(".leeg")?.remove();
 
   const max = Math.max(1, ...lijst.map(g => g.aantal));
+  const ruimte = lijst.some(g => g.foto) ? "17vh" : "7vh";
   const bestaand = {};
   $chart.querySelectorAll(".col").forEach(c => bestaand[c.dataset.id] = c);
   $names.textContent = "";
@@ -81,15 +97,21 @@ function render(groepen){
     let col = bestaand[g.id];
     if (!col){
       col = document.createElement("div"); col.className = "col"; col.dataset.id = g.id;
-      col.innerHTML = '<div class="c"></div><div class="bar"></div>';
+      col.innerHTML = '<div class="c"></div><div class="foto geen"></div><div class="bar"></div>';
     }
     delete bestaand[g.id];
     const lead = i === 0 && g.aantal > 0;
     col.classList.toggle("lead", lead);
     col.querySelector(".c").textContent = g.aantal;
+    const f = col.querySelector(".foto");
+    if (g.foto && f.dataset.src !== g.foto){
+      f.style.backgroundImage = 'url("' + g.foto.replace(/"/g, "") + '")';
+      f.dataset.src = g.foto;
+    }
+    f.classList.toggle("geen", !g.foto);
     const bar = col.querySelector(".bar");
     // leave room for the number above the tallest bar
-    requestAnimationFrame(() => bar.style.height = `calc(${(g.aantal / max) * 100}% - ${g.aantal ? "6vh" : "0px"})`);
+    requestAnimationFrame(() => bar.style.height = `calc(${(g.aantal / max) * 100}% - ${ruimte})`);
     if (vorige[g.id] !== undefined && g.aantal > vorige[g.id]){
       col.classList.remove("flash"); void col.offsetWidth; col.classList.add("flash");
     }
