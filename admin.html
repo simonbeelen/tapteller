@@ -22,14 +22,21 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--lin
 .btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
 .btn.danger{background:transparent;color:var(--minus);border:2px solid var(--line)}
 .groups{display:flex;flex-direction:column;gap:10px}
-.g{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 10px 10px 16px}
-.g .name{font-weight:700;font-size:1.15rem;overflow-wrap:anywhere}
-.g .count{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;font-size:2rem;min-width:2.5ch;text-align:right;font-variant-numeric:tabular-nums}
-.btns{display:flex;gap:6px}
-.minus{width:48px;height:64px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--minus);font-size:1.6rem;font-weight:700}
-.minus:disabled{opacity:.35}
-.plus{width:84px;height:64px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-family:"Big Shoulders Display",Impact,sans-serif;font-size:2rem;font-weight:900;transition:transform .08s}
-.plus:active{transform:scale(.94)}
+.g{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:12px}
+.g .kop{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.g .name{flex:1;font-weight:700;font-size:1.2rem;overflow-wrap:anywhere}
+.g .count{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.g .count small{font-family:"Barlow",sans-serif;font-size:.8rem;font-weight:600;color:var(--muted);margin-left:4px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.punt{height:68px;border-radius:12px;border:0;font-weight:700;line-height:1.1;transition:transform .08s}
+.punt b{display:block;font-family:"Big Shoulders Display",Impact,sans-serif;font-size:1.8rem;font-weight:900}
+.punt:active{transform:scale(.95)}
+.punt.gewoon{background:var(--accent);color:var(--accent-ink)}
+.punt.zwaar{background:var(--minus);color:#fff}
+.g.bump{animation:bump .4s ease-out}
+@keyframes bump{0%{border-color:var(--accent)}100%{border-color:var(--line)}}
+.undo{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));margin-top:14px;width:100%;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700}
+.undo:disabled{opacity:.4}
 .leeg{padding:28px 20px;text-align:center;border:2px dashed var(--line);border-radius:16px;color:var(--muted)}
 details{margin-top:28px;border-top:2px solid var(--line);padding-top:12px}
 summary{font-weight:700;cursor:pointer;padding:8px 0}
@@ -41,8 +48,8 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
 .fotorij{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .mini{width:48px;height:48px;border-radius:50%;background:#fff center/cover no-repeat;border:2px solid var(--line);flex:none}
 .mini.geen{background:transparent;border-style:dashed}
-.g{grid-template-columns:auto 1fr auto auto}
-.g .mini{width:40px;height:40px}
+.g .mini{width:44px;height:44px}
+.logo-voorbeeld{width:100%;max-width:320px;height:120px;border-radius:12px;border:2px dashed var(--line);background:#16245C center/contain no-repeat;margin:8px 0}
 </style>
 </head>
 <body>
@@ -64,12 +71,21 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
 
   <section id="app" class="hidden">
     <div class="groups" id="groups"></div>
+    <button class="undo" id="undo" disabled>Niets om ongedaan te maken</button>
 
     <details>
       <summary>Groepen beheren</summary>
       <div class="row">
         <input id="nieuw" placeholder="Naam van de groep" maxlength="40" autocomplete="off">
         <button class="btn" id="toevoegen">Toevoegen</button>
+      </div>
+      <div class="beheer-item">
+        <strong>Logo van het evenement</strong>
+        <div class="logo-voorbeeld" id="logoVoorbeeld"></div>
+        <div class="fotorij">
+          <button class="btn ghost" id="logoKiezen">Logo kiezen</button>
+          <button class="btn ghost hidden" id="logoWeg">Logo weghalen</button>
+        </div>
       </div>
       <div id="beheer"></div>
       <input type="file" id="fotoKiezer" accept="image/*" class="hidden">
@@ -81,7 +97,7 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, get, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, get, set, push, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { firebaseConfig } from "./config.js";
 
@@ -102,6 +118,7 @@ let stopLuisteren = null;
 
 onAuthStateChanged(auth, async user => {
   stopLuisteren?.(); stopLuisteren = null;
+  stopLogo?.(); stopLogo = null;
   $("logout").classList.toggle("hidden", !user);
   if (!user){
     $("login").classList.remove("hidden"); $("app").classList.add("hidden");
@@ -116,8 +133,9 @@ onAuthStateChanged(auth, async user => {
     return;
   }
   status("");
-  $("sub").textContent = "Tik op +1 bij elke consumptie die een groep haalt.";
+  $("sub").textContent = "Gewone consumptie = 1 punt, zwaar bier = 3 punten.";
   $("app").classList.remove("hidden");
+  stopLogo = luisterLogo();
   stopLuisteren = onValue(ref(db, "groepen"), s => { groepen = s.val() || {}; render(); },
     () => status("Verbinding verbroken. Herlaad de pagina."));
 });
@@ -131,10 +149,31 @@ $("logout").onclick = () => signOut(auth);
 
 const fout = () => status("Opslaan lukte niet. Controleer je verbinding.");
 
-function tel(id, delta){
-  if (delta < 0 && !(groepen[id]?.aantal > 0)) return;
-  update(ref(db), { [`groepen/${id}/aantal`]: increment(delta) }).catch(fout);
+const geschiedenis = []; // laatste tikken op dit toestel, om ongedaan te maken
+
+function tel(id, punten, soort){
+  update(ref(db), { [`groepen/${id}/aantal`]: increment(punten) })
+    .then(() => { geschiedenis.push({ id, punten, soort }); if (geschiedenis.length > 50) geschiedenis.shift(); toonUndo(); })
+    .catch(fout);
+  const el = document.querySelector('.g[data-id="' + id + '"]');
+  if (el){ el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 }
+
+function toonUndo(){
+  const l = geschiedenis[geschiedenis.length - 1];
+  const b = $("undo");
+  if (!l || !groepen[l.id]){ b.disabled = true; b.textContent = "Niets om ongedaan te maken"; return; }
+  b.disabled = false;
+  b.textContent = `Ongedaan maken: ${l.soort} bij ${groepen[l.id].naam} (−${l.punten})`;
+}
+
+$("undo").onclick = () => {
+  const l = geschiedenis.pop(); if (!l) return;
+  const huidig = groepen[l.id]?.aantal | 0;
+  const terug = Math.min(l.punten, huidig);
+  if (terug > 0) update(ref(db), { [`groepen/${l.id}/aantal`]: increment(-terug) }).catch(fout);
+  toonUndo();
+};
 
 function gesorteerd(){
   return Object.entries(groepen).map(([id, g]) => ({ id, ...g }))
@@ -150,19 +189,24 @@ function render(){
     $g.appendChild(e);
   }
   lijst.forEach(g => {
-    const row = document.createElement("div"); row.className = "g";
-    const th = miniFoto(g.foto);
+    const row = document.createElement("div"); row.className = "g"; row.dataset.id = g.id;
+    const kop = document.createElement("div"); kop.className = "kop";
     const n = document.createElement("div"); n.className = "name"; n.textContent = g.naam;
     const c = document.createElement("div"); c.className = "count"; c.textContent = g.aantal | 0;
+    const sm = document.createElement("small"); sm.textContent = "punten"; c.appendChild(sm);
+    kop.append(miniFoto(g.foto), n, c);
     const b = document.createElement("div"); b.className = "btns";
-    const m = document.createElement("button"); m.className = "minus"; m.textContent = "−";
-    m.setAttribute("aria-label", "Eén terug voor " + g.naam); m.disabled = !(g.aantal > 0);
-    m.onclick = () => tel(g.id, -1);
-    const p = document.createElement("button"); p.className = "plus"; p.textContent = "+1";
-    p.setAttribute("aria-label", "Eén consumptie voor " + g.naam);
-    p.onclick = () => tel(g.id, 1);
-    b.append(m, p); row.append(th, n, c, b); $g.appendChild(row);
+    const p1 = document.createElement("button"); p1.className = "punt gewoon";
+    p1.innerHTML = "<b>+1</b>Consumptie";
+    p1.setAttribute("aria-label", "Gewone consumptie voor " + g.naam + ", 1 punt");
+    p1.onclick = () => tel(g.id, 1, "consumptie");
+    const p3 = document.createElement("button"); p3.className = "punt zwaar";
+    p3.innerHTML = "<b>+3</b>Zwaar bier";
+    p3.setAttribute("aria-label", "Zwaar bier voor " + g.naam + ", 3 punten");
+    p3.onclick = () => tel(g.id, 3, "zwaar bier");
+    b.append(p1, p3); row.append(kop, b); $g.appendChild(row);
   });
+  toonUndo();
   renderBeheer(lijst);
 }
 
@@ -173,20 +217,19 @@ function miniFoto(foto){
   return d;
 }
 
-// Verklein een gekozen afbeelding tot max. 320 px, zodat ze klein genoeg is voor de database.
-function verklein(bestand){
+// Verklein een gekozen afbeelding, zodat ze klein genoeg is voor de database.
+function verklein(bestand, max = 320, grens = 350000){
   return new Promise((ok, nok) => {
     const url = URL.createObjectURL(bestand);
     const img = new Image();
     img.onload = () => {
-      const max = 320;
       const schaal = Math.min(1, max / Math.max(img.width, img.height));
       const w = Math.round(img.width * schaal), h = Math.round(img.height * schaal);
       const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
       const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
       let data = cv.toDataURL("image/png");          // behoudt transparantie (logo’s)
-      if (data.length > 350000){                      // te groot: jpg met witte achtergrond
+      if (data.length > grens){                      // te groot: jpg met witte achtergrond
         const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h;
         const c2 = cv2.getContext("2d"); c2.fillStyle = "#fff"; c2.fillRect(0, 0, w, h); c2.drawImage(cv, 0, 0);
         data = cv2.toDataURL("image/jpeg", 0.85);
@@ -242,15 +285,36 @@ kiezer.onchange = async () => {
   const id = fotoVoor;
   kiezer.value = "";
   if (!f || !id) return;
-  status("Foto wordt opgeslagen…");
+  status(id === "__logo" ? "Logo wordt opgeslagen…" : "Foto wordt opgeslagen…");
   try {
-    const data = await verklein(f);
-    await update(ref(db, "groepen/" + id), { foto: data });
+    if (id === "__logo"){
+      const data = await verklein(f, 800, 1200000);
+      await set(ref(db, "instellingen/logo"), data);
+    } else {
+      const data = await verklein(f);
+      await update(ref(db, "groepen/" + id), { foto: data });
+    }
     status("");
   } catch (e) {
     status("Foto opslaan lukte niet: " + ((e && (e.code || e.message)) || "onbekende fout"));
   }
 };
+
+$("logoKiezen").onclick = () => { fotoVoor = "__logo"; kiezer.click(); };
+$("logoWeg").onclick = () => {
+  if (confirm("Logo weghalen? Op het scherm komt dan de tekst in de plaats."))
+    remove(ref(db, "instellingen/logo")).catch(fout);
+};
+function luisterLogo(){
+  return onValue(ref(db, "instellingen/logo"), s => {
+    const v = s.val();
+    const ok = typeof v === "string" && v.startsWith("data:image/");
+    $("logoVoorbeeld").style.backgroundImage = ok ? 'url("' + v.replace(/"/g, "") + '")' : "";
+    $("logoWeg").classList.toggle("hidden", !ok);
+    $("logoKiezen").textContent = ok ? "Ander logo" : "Logo kiezen";
+  }, () => {});
+}
+let stopLogo = null;
 
 async function toevoegen(){
   const v = $("nieuw").value.trim(); if (!v) return;
