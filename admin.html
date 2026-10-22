@@ -27,12 +27,13 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--lin
 .g .name{flex:1;font-weight:700;font-size:1.2rem;overflow-wrap:anywhere}
 .g .count{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
 .g .count small{font-family:"Barlow",sans-serif;font-size:.8rem;font-weight:600;color:var(--muted);margin-left:4px}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.punt{height:68px;border-radius:12px;border:0;font-weight:700;line-height:1.1;transition:transform .08s}
+.btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.punt{min-height:72px;padding:6px 4px;border-radius:12px;border:0;font-weight:700;font-size:.9rem;line-height:1.15;transition:transform .08s}
 .punt b{display:block;font-family:"Big Shoulders Display",Impact,sans-serif;font-size:1.8rem;font-weight:900}
 .punt:active{transform:scale(.95)}
 .punt.gewoon{background:var(--accent);color:var(--accent-ink)}
 .punt.zwaar{background:var(--minus);color:#fff}
+.punt.vat{background:var(--ink);color:var(--bg)}
 .g.bump{animation:bump .4s ease-out}
 @keyframes bump{0%{border-color:var(--accent)}100%{border-color:var(--line)}}
 .undo{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));margin-top:14px;width:100%;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700}
@@ -133,7 +134,7 @@ onAuthStateChanged(auth, async user => {
     return;
   }
   status("");
-  $("sub").textContent = "Gewone consumptie = 1 punt, zwaar bier = 3 punten.";
+  $("sub").textContent = SOORTEN.map(x => `${x.uitleg} = ${x.punten}`).join(" · ");
   $("app").classList.remove("hidden");
   stopLogo = luisterLogo();
   stopLuisteren = onValue(ref(db, "groepen"), s => { groepen = s.val() || {}; render(); },
@@ -148,6 +149,13 @@ $("login").addEventListener("submit", async e => {
 $("logout").onclick = () => signOut(auth);
 
 const fout = () => status("Opslaan lukte niet. Controleer je verbinding.");
+
+// Puntentabel: pas hier de punten aan als je wil.
+const SOORTEN = [
+  { naam: "Consumptie", uitleg: "Bier, frisdrank, wijn", punten: 1,  stijl: "gewoon" },
+  { naam: "Streekbier", uitleg: "Streekbier",            punten: 3,  stijl: "zwaar" },
+  { naam: "Vat 20 L",   uitleg: "Vat (20 L)",            punten: 75, stijl: "vat", bevestig: true }
+];
 
 const geschiedenis = []; // laatste tikken op dit toestel, om ongedaan te maken
 
@@ -196,15 +204,18 @@ function render(){
     const sm = document.createElement("small"); sm.textContent = "punten"; c.appendChild(sm);
     kop.append(miniFoto(g.foto), n, c);
     const b = document.createElement("div"); b.className = "btns";
-    const p1 = document.createElement("button"); p1.className = "punt gewoon";
-    p1.innerHTML = "<b>+1</b>Consumptie";
-    p1.setAttribute("aria-label", "Gewone consumptie voor " + g.naam + ", 1 punt");
-    p1.onclick = () => tel(g.id, 1, "consumptie");
-    const p3 = document.createElement("button"); p3.className = "punt zwaar";
-    p3.innerHTML = "<b>+3</b>Zwaar bier";
-    p3.setAttribute("aria-label", "Zwaar bier voor " + g.naam + ", 3 punten");
-    p3.onclick = () => tel(g.id, 3, "zwaar bier");
-    b.append(p1, p3); row.append(kop, b); $g.appendChild(row);
+    SOORTEN.forEach(x => {
+      const k = document.createElement("button"); k.className = "punt " + x.stijl;
+      const big = document.createElement("b"); big.textContent = "+" + x.punten;
+      k.append(big, document.createTextNode(x.naam));
+      k.setAttribute("aria-label", `${x.naam} voor ${g.naam}, ${x.punten} punten`);
+      k.onclick = () => {
+        if (x.bevestig && !confirm(`${x.naam} voor ${g.naam}? Dat is +${x.punten} punten.`)) return;
+        tel(g.id, x.punten, x.naam.toLowerCase());
+      };
+      b.appendChild(k);
+    });
+    row.append(kop, b); $g.appendChild(row);
   });
   toonUndo();
   renderBeheer(lijst);
