@@ -50,6 +50,10 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
 .mini{width:48px;height:48px;border-radius:50%;background:#fff center/cover no-repeat;border:2px solid var(--line);flex:none}
 .mini.geen{background:transparent;border-style:dashed}
 .g .mini{width:44px;height:44px}
+.gifrij{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.gifrij img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:2px solid var(--line);background:#000}
+.gifrij .leeg-gif{width:64px;height:64px;border-radius:10px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.8rem;font-weight:700}
+.gifrij input{flex:1;min-width:160px}
 .logo-voorbeeld{width:100%;max-width:320px;height:120px;border-radius:12px;border:2px dashed var(--line);background:#16245C center/contain no-repeat;margin:8px 0}
 </style>
 </head>
@@ -90,6 +94,7 @@ summary{font-weight:700;cursor:pointer;padding:8px 0}
       </div>
       <div id="beheer"></div>
       <input type="file" id="fotoKiezer" accept="image/*" class="hidden">
+      <input type="file" id="gifKiezer" accept="image/gif" class="hidden">
       <div class="row"><button class="btn danger" id="reset">Alle tellingen op 0 zetten</button></div>
       <p class="note">Wijzigingen zijn meteen zichtbaar op het scherm.</p>
     </details>
@@ -115,11 +120,14 @@ try {
 }
 
 let groepen = {};
+let gifs = {};
+let stopGifs = null;
 let stopLuisteren = null;
 
 onAuthStateChanged(auth, async user => {
   stopLuisteren?.(); stopLuisteren = null;
   stopLogo?.(); stopLogo = null;
+  stopGifs?.(); stopGifs = null;
   $("logout").classList.toggle("hidden", !user);
   if (!user){
     $("login").classList.remove("hidden"); $("app").classList.add("hidden");
@@ -137,6 +145,7 @@ onAuthStateChanged(auth, async user => {
   $("sub").textContent = SOORTEN.map(x => `${x.uitleg} = ${x.punten}`).join(" · ");
   $("app").classList.remove("hidden");
   stopLogo = luisterLogo();
+  stopGifs = onValue(ref(db, "gifs"), s => { gifs = s.val() || {}; renderBeheer(gesorteerd()); }, () => {});
   stopLuisteren = onValue(ref(db, "groepen"), s => { groepen = s.val() || {}; render(); },
     () => status("Verbinding verbroken. Herlaad de pagina."));
 });
@@ -281,11 +290,39 @@ function renderBeheer(lijst){
     const del = document.createElement("button"); del.className = "btn danger"; del.textContent = "Groep verwijderen";
     del.onclick = () => {
       if (confirm(`‘${g.naam}’ verwijderen? De telling van deze groep verdwijnt.`))
-        remove(ref(db, "groepen/" + g.id)).catch(fout);
+        update(ref(db), { ["groepen/" + g.id]: null, ["gifs/" + g.id]: null }).catch(fout);
     };
     fr.appendChild(del);
 
-    item.append(row, fr); $b.appendChild(item);
+    // gif bij elke score
+    const gr = document.createElement("div"); gr.className = "gifrij";
+    const huidig = gifs[g.id];
+    if (typeof huidig === "string"){
+      const im = document.createElement("img"); im.src = huidig; im.alt = "Gif van " + g.naam; gr.appendChild(im);
+    } else {
+      const l = document.createElement("div"); l.className = "leeg-gif"; l.textContent = "GIF"; gr.appendChild(l);
+    }
+    const gKies = document.createElement("button"); gKies.className = "btn ghost";
+    gKies.textContent = huidig ? "Andere gif" : "Gif kiezen";
+    gKies.onclick = () => { gifVoor = g.id; gifKiezer.click(); };
+    gr.appendChild(gKies);
+    const link = document.createElement("input"); link.type = "url"; link.placeholder = "of plak een gif-link (https://…)";
+    link.setAttribute("aria-label", "Gif-link voor " + g.naam);
+    const linkOk = document.createElement("button"); linkOk.className = "btn ghost"; linkOk.textContent = "Link opslaan";
+    linkOk.onclick = () => {
+      const v = link.value.trim();
+      if (!v.startsWith("https://")) { status("Een gif-link moet beginnen met https://"); return; }
+      set(ref(db, "gifs/" + g.id), v).then(() => { link.value = ""; link.blur(); status(""); })
+        .catch(e => status("Gif opslaan lukte niet: " + (e.code || e.message)));
+    };
+    gr.append(link, linkOk);
+    if (huidig){
+      const gWeg = document.createElement("button"); gWeg.className = "btn ghost"; gWeg.textContent = "Gif weghalen";
+      gWeg.onclick = () => remove(ref(db, "gifs/" + g.id)).catch(fout);
+      gr.appendChild(gWeg);
+    }
+
+    item.append(row, fr, gr); $b.appendChild(item);
   });
 }
 
@@ -309,6 +346,24 @@ kiezer.onchange = async () => {
   } catch (e) {
     status("Foto opslaan lukte niet: " + ((e && (e.code || e.message)) || "onbekende fout"));
   }
+};
+
+// gif-bestand: niet verkleinen (dan stopt de animatie), wel een maximum van 2 MB
+const gifKiezer = $("gifKiezer");
+let gifVoor = null;
+gifKiezer.onchange = () => {
+  const f = gifKiezer.files && gifKiezer.files[0];
+  const id = gifVoor;
+  gifKiezer.value = "";
+  if (!f || !id) return;
+  if (f.type !== "image/gif"){ status("Kies een .gif-bestand."); return; }
+  if (f.size > 2 * 1024 * 1024){ status("Deze gif is groter dan 2 MB. Kies een kleinere of plak een gif-link."); return; }
+  status("Gif wordt opgeslagen…");
+  const r = new FileReader();
+  r.onload = () => set(ref(db, "gifs/" + id), r.result).then(() => status(""))
+    .catch(e => status("Gif opslaan lukte niet: " + (e.code || e.message)));
+  r.onerror = () => status("Deze gif kan niet gelezen worden.");
+  r.readAsDataURL(f);
 };
 
 $("logoKiezen").onclick = () => { fotoVoor = "__logo"; kiezer.click(); };
