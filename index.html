@@ -28,8 +28,18 @@ h1{font-size:clamp(2.4rem,6.5vw,7rem);line-height:.85;margin:0;font-weight:900}
 .col .foto{width:min(100%,clamp(56px,9vh,130px));aspect-ratio:1;margin:0 auto .8vh;border-radius:50%;background:#fff center/cover no-repeat;border:4px solid var(--bar);flex:none}
 .col.lead .foto{border-color:var(--accent)}
 .col .foto.geen{display:none}
-.col .bar{background:var(--bar);border-radius:12px 12px 0 0;height:0;transition:height .9s cubic-bezier(.2,.9,.2,1);min-height:6px}
-.col.lead .bar{background:var(--accent)}
+/* geluidsmeter: kleur hangt vast aan de hoogte van de grafiek, dus hoe hoger de balk, hoe roder */
+.col .bar{
+  height:0;min-height:6px;border-radius:10px 10px 0 0;
+  transition:height .9s cubic-bezier(.2,.9,.2,1);
+  background-image:
+    repeating-linear-gradient(to top, transparent 0 calc(var(--seg) - var(--gap)), var(--bg) calc(var(--seg) - var(--gap)) var(--seg)),
+    linear-gradient(to top, #22C55E 0%, #84CC16 30%, #FACC15 55%, #F97316 75%, #EF4444 90%, #DC2626 100%);
+  background-size:100% var(--meter-h,60vh);
+  background-position:bottom;
+  background-repeat:no-repeat;
+}
+.chart{--seg:clamp(14px,2.4vh,26px);--gap:clamp(3px,.5vh,5px)}
 .col.lead .c{color:var(--accent)}
 .col.flash .bar{animation:flash 1s ease-out}
 @keyframes flash{0%{filter:brightness(1.6)}100%{filter:none}}
@@ -39,6 +49,16 @@ h1{font-size:clamp(2.4rem,6.5vw,7rem);line-height:.85;margin:0;font-weight:900}
 .names .lead .rank{color:var(--accent)}
 footer{display:flex;justify-content:space-between;align-items:center;margin-top:2vh;color:var(--muted)}
 footer button{background:transparent;border:2px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--muted)}
+/* gif bij elke score */
+.gif-overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(10,16,48,.55);pointer-events:none}
+.gif-kaart{display:flex;flex-direction:column;align-items:center;gap:2vh;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.gif-kaart img{display:block;max-width:70vw;max-height:62vh;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);background:#000}
+.gif-tekst{display:flex;align-items:baseline;gap:1.5vw;font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.6)}
+.gif-tekst span{font-size:clamp(2rem,5vw,5.5rem)}
+.gif-tekst b{font-size:clamp(2.4rem,6vw,6.5rem);color:var(--accent)}
+.gif-overlay.weg .gif-kaart{animation:weg .3s ease-in forwards}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes weg{to{transform:scale(.85);opacity:0}}
 .leeg{margin:auto;font-size:clamp(1.2rem,2.4vw,2rem);color:var(--muted);text-align:center;max-width:30ch}
 </style>
 </head>
@@ -50,7 +70,7 @@ footer button{background:transparent;border:2px solid var(--line);border-radius:
       <span class="tekst hidden" id="evenement"></span>
       <h1>Klassement</h1>
     </div>
-    <div class="total"><div class="num" id="total">0</div><div>consumpties in totaal</div></div>
+    <div class="total"><div class="num" id="total">0</div><div>punten in totaal</div></div>
   </header>
   <div class="chart" id="chart"></div>
   <div class="names" id="names"></div>
@@ -59,6 +79,13 @@ footer button{background:transparent;border:2px solid var(--line);border-radius:
     <button id="fsBtn">Volledig scherm</button>
   </footer>
 </main>
+
+<div class="gif-overlay hidden" id="gifOverlay" aria-live="polite">
+  <div class="gif-kaart">
+    <img id="gifImg" alt="">
+    <div class="gif-tekst"><span id="gifNaam"></span><b id="gifPlus"></b></div>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -85,8 +112,39 @@ function zetLogo(){
 }
 zetLogo();
 const $chart = document.getElementById("chart");
+// zet de hoogte van de grafiek als CSS-variabele, zodat het kleurverloop over de hele hoogte loopt
+new ResizeObserver(() => $chart.style.setProperty("--meter-h", $chart.clientHeight + "px")).observe($chart);
 const $names = document.getElementById("names");
 let vorige = {};
+
+// ---------- gif bij elke score ----------
+const GIF_DUUR = 3500;          // hoelang een gif op het scherm blijft (ms)
+let gifs = {};
+const wachtrij = [];
+let bezig = false;
+function speelGif(item){
+  wachtrij.push(item);
+  if (wachtrij.length > 4) wachtrij.splice(0, wachtrij.length - 4); // niet te ver achterop raken
+  if (!bezig) volgende();
+}
+function volgende(){
+  const item = wachtrij.shift();
+  const $o = document.getElementById("gifOverlay");
+  if (!item){ bezig = false; $o.classList.add("hidden"); return; }
+  bezig = true;
+  const oud = document.getElementById("gifImg");
+  const img = oud.cloneNode();           // nieuw element = gif start opnieuw vanaf het begin
+  img.src = item.src; img.alt = "Gif van " + item.naam;
+  oud.replaceWith(img);
+  document.getElementById("gifNaam").textContent = item.naam;
+  document.getElementById("gifPlus").textContent = "+" + item.plus;
+  $o.classList.remove("hidden", "weg");
+  const $k = $o.querySelector(".gif-kaart"); $k.style.animation = "none"; void $k.offsetWidth; $k.style.animation = "";
+  setTimeout(() => {
+    $o.classList.add("weg");
+    setTimeout(volgende, 300);
+  }, GIF_DUUR);
+}
 
 function render(groepen){
   const lijst = Object.entries(groepen || {}).map(([id, g]) => ({ id, naam: g.naam || "?", aantal: g.aantal | 0, foto: typeof g.foto === "string" && g.foto.startsWith("data:image/") ? g.foto : "" }));
@@ -126,6 +184,9 @@ function render(groepen){
     requestAnimationFrame(() => bar.style.height = `calc(${(g.aantal / max) * 100}% - ${ruimte})`);
     if (vorige[g.id] !== undefined && g.aantal > vorige[g.id]){
       col.classList.remove("flash"); void col.offsetWidth; col.classList.add("flash");
+      const src = gifs[g.id];
+      if (typeof src === "string" && (src.startsWith("data:image/gif") || src.startsWith("https://")))
+        speelGif({ src, naam: g.naam, plus: g.aantal - vorige[g.id] });
     }
     $chart.appendChild(col);
 
@@ -146,6 +207,7 @@ try {
     logoUitDb = typeof v === "string" && v.startsWith("data:image/") ? v : "";
     zetLogo();
   }, () => {});
+  onValue(ref(db, "gifs"), s => { gifs = s.val() || {}; }, () => {});
   onValue(ref(db, "groepen"), s => render(s.val()),
     () => { $chart.innerHTML = '<p class="leeg">Geen verbinding met de database. Controleer config.js en de regels.</p>'; });
 } catch (e) {
