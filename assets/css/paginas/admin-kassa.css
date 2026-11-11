@@ -1,0 +1,203 @@
+/* Kassa en snel tellen */
+
+.tegels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--ruimte-3);
+}
+
+.tegel {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--ruimte-1);
+  min-height: 5.5rem;
+  padding: var(--ruimte-3);
+  border: 1px solid var(--lijn);
+  border-radius: var(--straal-l);
+  background: var(--vlak);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--tijd), border-color var(--tijd), transform var(--tijd);
+}
+
+.tegel:hover { background: var(--vlak-hover); }
+.tegel:active { transform: scale(0.97); }
+.tegel--gekozen { border-color: var(--merk); }
+
+.tegel__detail {
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-xs);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.tegel__waarschuwing {
+  color: var(--gevaar);
+  font-size: var(--tekst-xs);
+  font-weight: 600;
+}
+
+.tegel__aantal {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--ruimte-2);
+  border-radius: 14px;
+  background: var(--merk);
+  color: var(--merk-tekst);
+  font-size: var(--tekst-s);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.gekozen-groep {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+  margin-bottom: var(--ruimte-4);
+  padding: var(--ruimte-2) var(--ruimte-2) var(--ruimte-2) var(--ruimte-3);
+  border: 1px solid var(--lijn);
+  border-radius: var(--straal-l);
+  background: var(--vlak);
+}
+
+.gekozen-groep__naam {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--tekst-l);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bestelling onderaan het scherm */
+
+.mand {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  padding: var(--ruimte-3) var(--ruimte-4) calc(var(--ruimte-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--lijn-sterk);
+  background: var(--verhoogd);
+  box-shadow: 0 -12px 32px rgb(0 0 0 / 0.25);
+}
+
+.mand__inhoud { width: min(46rem, 100%); margin: 0 auto; }
+
+.mand__regels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruimte-2);
+  max-height: 5.5rem;
+  margin-bottom: var(--ruimte-3);
+  overflow-y: auto;
+}
+
+.mand__leeg { color: var(--tekst-zacht); font-size: var(--tekst-s); }
+
+.regel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruimte-2);
+  min-height: 34px;
+  padding: 0 var(--ruimte-3);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: 17px;
+  background: var(--vlak);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+}
+.regel:hover { border-color: var(--gevaar); }
+
+.mand__onder {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+}
+
+.mand__totaal { flex: 1; min-width: 0; line-height: 1.15; }
+
+.mand__bedrag {
+  font-size: var(--tekst-2xl);
+  font-weight: 800;
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+}
+
+.mand__eenheid { color: var(--tekst-zacht); font-size: var(--tekst-s); }
+
+.mand__punten {
+  display: block;
+  overflow: hidden;
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mand__afrekenen { min-width: 8.5rem; min-height: 52px; font-size: var(--tekst-m); }
+
+/* Snel tellen */
+
+.snel { padding: var(--ruimte-3); }
+
+.snel__kop {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+  margin-bottom: var(--ruimte-3);
+}
+
+.snel__naam { flex: 1; min-width: 0; font-weight: 700; font-size: var(--tekst-l); }
+
+.snel__score {
+  font-size: var(--tekst-xl);
+  font-weight: 800;
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+}
+
+.snel__knoppen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+  gap: var(--ruimte-2);
+}
+
+.snelknop {
+  display: grid;
+  gap: 2px;
+  place-items: center;
+  min-height: 4.5rem;
+  padding: var(--ruimte-2);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: var(--straal);
+  background: var(--verhoogd);
+  font-size: var(--tekst-xs);
+  font-weight: 600;
+  transition: transform var(--tijd), background var(--tijd);
+}
+.snelknop:hover { background: var(--vlak-hover); }
+.snelknop:active { transform: scale(0.96); }
+
+.snelknop__punten {
+  font-size: var(--tekst-xl);
+  font-weight: 800;
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+}
+
+.snelknop--accent { border-color: transparent; background: var(--merk); color: var(--merk-tekst); }
+.snelknop--accent:hover { background: var(--merk-hover); }
+.snelknop--donker { border-color: transparent; background: var(--tekst); color: var(--achtergrond); }
+.snelknop--donker:hover { background: var(--tekst-zacht); }

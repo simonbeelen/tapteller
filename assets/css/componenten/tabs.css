@@ -1,0 +1,26 @@
+.tabs {
+  display: flex;
+  gap: var(--ruimte-1);
+  padding: 0 var(--ruimte-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--ruimte-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+  transition: color var(--tijd), border-color var(--tijd);
+}
+.tab:hover { color: var(--tekst); }
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--merk);
+  color: var(--tekst);
+}

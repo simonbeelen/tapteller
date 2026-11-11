@@ -1,0 +1,21 @@
+.avatar {
+  --afmeting: 40px;
+
+  flex: none;
+  width: var(--afmeting);
+  height: var(--afmeting);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: 50%;
+  background: #fff var(--foto, none) center / cover no-repeat;
+}
+.avatar--leeg {
+  display: grid;
+  place-items: center;
+  background: var(--vlak-hover);
+  color: var(--tekst-zacht);
+  font-size: calc(var(--afmeting) * 0.36);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.avatar--groot { --afmeting: 56px; }

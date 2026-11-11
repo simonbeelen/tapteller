@@ -1,0 +1,87 @@
+.veld {
+  display: grid;
+  gap: var(--ruimte-1);
+}
+
+.veld__label {
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.veld__hulp {
+  color: var(--tekst-vaag);
+  font-size: var(--tekst-xs);
+}
+
+.invoer,
+.keuze,
+.tekstvak {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--ruimte-3);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: var(--straal);
+  background: var(--verhoogd);
+  color: var(--tekst);
+  font-size: var(--tekst-m);
+  transition: border-color var(--tijd);
+}
+
+.invoer::placeholder,
+.tekstvak::placeholder { color: var(--tekst-vaag); }
+
+.invoer:hover,
+.keuze:hover,
+.tekstvak:hover { border-color: var(--tekst-vaag); }
+
+.invoer:focus-visible,
+.keuze:focus-visible,
+.tekstvak:focus-visible {
+  outline: none;
+  border-color: var(--merk);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--merk) 25%, transparent);
+}
+
+.invoer--compact {
+  min-height: 40px;
+  padding: 0 var(--ruimte-2);
+  font-size: var(--tekst-s);
+}
+
+.invoer--getal {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tekstvak {
+  min-height: 7.5rem;
+  padding: var(--ruimte-3);
+  resize: vertical;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--tekst-s);
+  line-height: 1.6;
+}
+
+.vink {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--merk);
+}
+
+.formulier {
+  display: grid;
+  gap: var(--ruimte-4);
+}
+
+.rij {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruimte-2);
+}
+.rij > .invoer,
+.rij > .keuze { flex: 1; min-width: 0; }

@@ -1,0 +1,60 @@
+/* Reset en basisopmaak */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--achtergrond);
+  color: var(--tekst);
+  font-family: var(--lettertype);
+  font-size: var(--tekst-m);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, p, figure {
+  margin: 0;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--merk);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

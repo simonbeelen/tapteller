@@ -1,0 +1,101 @@
+/* ==========================================================================
+   Ontwerpvariabelen. Pas kleuren, afstanden en lettergroottes hier aan;
+   alle andere stylesheets verwijzen enkel naar deze waarden.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  --lettertype: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Vlakken en lijnen */
+  --achtergrond: #0b0d11;
+  --verhoogd: #11151b;
+  --vlak: #151a21;
+  --vlak-hover: #1b212a;
+  --lijn: #232a35;
+  --lijn-sterk: #343d4c;
+
+  /* Tekst */
+  --tekst: #e8ecf2;
+  --tekst-zacht: #9aa4b5;
+  --tekst-vaag: #6a7486;
+
+  /* Merk en status */
+  --merk: #e0a63c;
+  --merk-hover: #eab656;
+  --merk-tekst: #17120a;
+  --gevaar: #f2705f;
+  --succes: #46c37b;
+
+  /* Geluidsmeter op het scherm */
+  --meter-groen: #2fbf71;
+  --meter-geel: #e9b82d;
+  --meter-rood: #e5483b;
+
+  /* Afstanden (4-puntsraster) */
+  --ruimte-1: 4px;
+  --ruimte-2: 8px;
+  --ruimte-3: 12px;
+  --ruimte-4: 16px;
+  --ruimte-5: 24px;
+  --ruimte-6: 32px;
+  --ruimte-7: 48px;
+
+  /* Lettergroottes */
+  --tekst-xs: 0.75rem;
+  --tekst-s: 0.875rem;
+  --tekst-m: 1rem;
+  --tekst-l: 1.125rem;
+  --tekst-xl: 1.375rem;
+  --tekst-2xl: 1.75rem;
+
+  /* Vormen en beweging */
+  --straal-s: 6px;
+  --straal: 10px;
+  --straal-l: 16px;
+  --schaduw-pop: 0 18px 48px rgb(0 0 0 / 0.5);
+  --ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --tijd: 160ms;
+}
+
+/* Lichte weergave: volgt het systeem, tenzij data-thema is ingesteld. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-thema]) {
+    color-scheme: light;
+    --achtergrond: #f4f3ef;
+    --verhoogd: #ffffff;
+    --vlak: #ffffff;
+    --vlak-hover: #f0efea;
+    --lijn: #e3e1da;
+    --lijn-sterk: #cbc8be;
+    --tekst: #14181f;
+    --tekst-zacht: #566073;
+    --tekst-vaag: #818a9b;
+    --merk: #b9780a;
+    --merk-hover: #a46a07;
+    --merk-tekst: #ffffff;
+    --gevaar: #c93a29;
+    --succes: #1e8f52;
+    --schaduw-pop: 0 18px 48px rgb(20 24 31 / 0.18);
+  }
+}
+
+:root[data-thema="light"] {
+  color-scheme: light;
+  --achtergrond: #f4f3ef;
+  --verhoogd: #ffffff;
+  --vlak: #ffffff;
+  --vlak-hover: #f0efea;
+  --lijn: #e3e1da;
+  --lijn-sterk: #cbc8be;
+  --tekst: #14181f;
+  --tekst-zacht: #566073;
+  --tekst-vaag: #818a9b;
+  --merk: #b9780a;
+  --merk-hover: #a46a07;
+  --merk-tekst: #ffffff;
+  --gevaar: #c93a29;
+  --succes: #1e8f52;
+  --schaduw-pop: 0 18px 48px rgb(20 24 31 / 0.18);
+}

@@ -1,0 +1,100 @@
+/* Kader van de beheer-app: inloggen, koptekst, navigatie, laadstatus */
+
+.admin { min-height: 100vh; min-height: 100dvh; }
+
+.laden {
+  padding: var(--ruimte-7) var(--ruimte-4);
+  color: var(--tekst-zacht);
+  text-align: center;
+}
+
+/* Inloggen */
+
+.inloggen {
+  width: min(24rem, 100%);
+  margin: 0 auto;
+  padding: var(--ruimte-7) var(--ruimte-4);
+}
+
+.inloggen__merk {
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--ruimte-5);
+}
+
+.inloggen__titel {
+  font-size: var(--tekst-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.inloggen__uitleg {
+  margin: var(--ruimte-2) 0 var(--ruimte-5);
+  color: var(--tekst-zacht);
+}
+
+.inloggen__fout {
+  margin-top: var(--ruimte-4);
+  padding: var(--ruimte-3);
+  border: 1px solid color-mix(in srgb, var(--gevaar) 50%, transparent);
+  border-radius: var(--straal);
+  background: color-mix(in srgb, var(--gevaar) 10%, transparent);
+  font-size: var(--tekst-s);
+}
+
+.inloggen__code {
+  display: block;
+  margin-top: var(--ruimte-2);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--tekst-xs);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* App-kader */
+
+.app {
+  width: min(46rem, 100%);
+  margin: 0 auto;
+}
+
+.app__kop {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding-top: env(safe-area-inset-top, 0px);
+  border-bottom: 1px solid var(--lijn);
+  background: var(--achtergrond);
+}
+
+.app__balk {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+  padding: var(--ruimte-3) var(--ruimte-4) var(--ruimte-1);
+}
+
+.app__merk {
+  width: 28px;
+  height: 28px;
+}
+
+.app__naam {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--tekst-l);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app__inhoud {
+  padding: var(--ruimte-5) var(--ruimte-4) var(--ruimte-7);
+  outline: none;
+}
+
+/* Ruimte onder de inhoud zodat de kassabalk niets afdekt; --balk-hoogte wordt door shell.js bijgehouden */
+.app--met-balk .app__inhoud { padding-bottom: calc(var(--balk-hoogte, 0px) + var(--ruimte-6)); }

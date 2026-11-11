@@ -1,0 +1,7 @@
+/* Beamer-weergave (index.html) */
+@import "kern/tokens.css";
+@import "kern/lettertypes.css";
+@import "kern/basis.css";
+@import "componenten/knoppen.css";
+@import "componenten/icoon.css";
+@import "paginas/scherm.css";

@@ -1,0 +1,37 @@
+.meldingen {
+  position: fixed;
+  inset: auto var(--ruimte-3) calc(var(--balk-hoogte, 0px) + var(--ruimte-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+  max-width: 100%;
+  padding: var(--ruimte-2) var(--ruimte-2) var(--ruimte-2) var(--ruimte-4);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: var(--straal);
+  background: var(--tekst);
+  box-shadow: var(--schaduw-pop);
+  color: var(--achtergrond);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+  pointer-events: auto;
+  animation: toast-in 220ms var(--ease);
+}
+
+.toast__tekst { padding: var(--ruimte-2) 0; }
+
+.toast .knop {
+  --kn-achtergrond: transparent;
+  --kn-tekst: var(--achtergrond);
+  --kn-rand: color-mix(in srgb, var(--achtergrond) 40%, transparent);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+}

@@ -1,0 +1,16 @@
+/* Beheer-weergave (admin.html) */
+@import "kern/tokens.css";
+@import "kern/lettertypes.css";
+@import "kern/basis.css";
+@import "componenten/icoon.css";
+@import "componenten/knoppen.css";
+@import "componenten/formulieren.css";
+@import "componenten/panelen.css";
+@import "componenten/tabs.css";
+@import "componenten/segment.css";
+@import "componenten/avatar.css";
+@import "componenten/toast.css";
+@import "componenten/dialoog.css";
+@import "paginas/admin-kader.css";
+@import "paginas/admin-kassa.css";
+@import "paginas/admin-beheer.css";

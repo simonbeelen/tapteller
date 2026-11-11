@@ -1,0 +1,54 @@
+.paneel {
+  padding: var(--ruimte-4);
+  border: 1px solid var(--lijn);
+  border-radius: var(--straal-l);
+  background: var(--vlak);
+}
+
+.paneel + .paneel { margin-top: var(--ruimte-3); }
+
+.paneel--leeg {
+  padding: var(--ruimte-6) var(--ruimte-4);
+  border-style: dashed;
+  background: transparent;
+  color: var(--tekst-zacht);
+  text-align: center;
+}
+
+.sectie { margin-top: var(--ruimte-6); }
+.sectie:first-child { margin-top: 0; }
+
+.sectie__kop {
+  margin-bottom: var(--ruimte-3);
+}
+
+.sectie__titel {
+  font-size: var(--tekst-l);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sectie__uitleg {
+  margin-top: var(--ruimte-1);
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-s);
+}
+
+.stapel { display: grid; gap: var(--ruimte-3); }
+
+.kenmerken { margin: 0; }
+.kenmerken__rij {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ruimte-4);
+  padding: var(--ruimte-2) 0;
+  border-bottom: 1px solid var(--lijn);
+}
+.kenmerken__rij:last-child { border-bottom: 0; }
+.kenmerken dt { color: var(--tekst-zacht); }
+.kenmerken dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.notitie {
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-s);
+}

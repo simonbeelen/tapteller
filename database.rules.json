@@ -5,15 +5,88 @@
       ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
       "$id": {
         ".validate": "newData.hasChildren(['naam', 'aantal'])",
-        "naam":   { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
-        "aantal": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "t":      { ".validate": "newData.isNumber()" },
-        "foto":   { ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 400000" },
-        "$other": { ".validate": false }
+        "naam": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+        },
+        "aantal": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "t": {
+          ".validate": "newData.isNumber()"
+        },
+        "foto": {
+          ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 400000"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "gifs": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      "$id": {
+        ".validate": "newData.isString() && (newData.val().beginsWith('data:image/gif') || newData.val().beginsWith('https://')) && newData.val().length < 3000000"
+      }
+    },
+    "instellingen": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      "logo": {
+        ".validate": "newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 1500000"
+      },
+      "naam": {
+        ".validate": "newData.isString() && newData.val().length <= 60"
+      },
+      "titel": {
+        ".validate": "newData.isString() && newData.val().length <= 40"
+      },
+      "woord": {
+        ".validate": "newData.val() === 'groep' || newData.val() === 'team' || newData.val() === 'ploeg' || newData.val() === 'jeugdbeweging'"
+      },
+      "modus": {
+        ".validate": "newData.val() === 'bonnetjes' || newData.val() === 'zuipbeker'"
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
+    "kaart": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      "$d": {
+        ".validate": "newData.hasChildren(['naam', 'prijs'])",
+        "naam": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+        },
+        "prijs": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+        },
+        "punten": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+        },
+        "telt": {
+          ".validate": "newData.isBoolean()"
+        },
+        "v": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "bestellingen": {
+      ".read": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins/' + auth.uid).val() === true",
+      "$b": {
+        ".validate": "newData.hasChildren(['groep', 'bonnetjes', 'punten', 't'])"
       }
     },
     "admins": {
-      "$uid": { ".read": "auth != null && auth.uid === $uid" }
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
     }
   }
 }

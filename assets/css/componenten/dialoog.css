@@ -1,0 +1,34 @@
+.dialoog {
+  width: min(26rem, calc(100% - 2 * var(--ruimte-4)));
+  padding: var(--ruimte-5);
+  border: 1px solid var(--lijn-sterk);
+  border-radius: var(--straal-l);
+  background: var(--verhoogd);
+  box-shadow: var(--schaduw-pop);
+  color: var(--tekst);
+}
+
+.dialoog::backdrop { background: rgb(0 0 0 / 0.6); }
+.dialoog[open] { animation: dialoog-in 200ms var(--ease); }
+
+.dialoog__titel {
+  font-size: var(--tekst-l);
+  font-weight: 700;
+}
+
+.dialoog__tekst {
+  margin-top: var(--ruimte-2);
+  color: var(--tekst-zacht);
+}
+
+.dialoog__acties {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ruimte-2);
+  margin-top: var(--ruimte-5);
+}
+
+@keyframes dialoog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+}

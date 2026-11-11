@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Beamer-weergave. Alle maten schalen mee met het scherm (vh/vw + clamp).
+   ========================================================================== */
+
+.scherm {
+  --segment: clamp(14px, 2.6vh, 28px);
+  --spleet: clamp(3px, 0.5vh, 6px);
+  --kop-ruimte: clamp(110px, 21vh, 210px);
+
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.scherm--zonder-foto { --kop-ruimte: clamp(56px, 11vh, 120px); }
+
+.bord {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(12px, 2.4vh, 28px);
+  height: 100%;
+  padding: clamp(16px, 3.2vh, 40px) clamp(20px, 4vw, 64px);
+}
+
+/* Kop ---------------------------------------------------------------- */
+
+.bord__kop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ruimte-5);
+  padding-bottom: clamp(12px, 2vh, 24px);
+  border-bottom: 1px solid var(--lijn);
+}
+
+.merk {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 40px);
+  min-width: 0;
+}
+
+.merk__logo {
+  width: auto;
+  max-width: 30vw;
+  height: clamp(56px, 13vh, 150px);
+  object-fit: contain;
+}
+
+.merk__evenement {
+  margin-bottom: 0.4em;
+  color: var(--tekst-zacht);
+  font-size: clamp(0.8rem, 1.3vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.merk__titel {
+  font-size: clamp(2.4rem, 6vw, 6.5rem);
+  font-weight: 800;
+  font-stretch: 75%;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+}
+
+.totaal {
+  display: grid;
+  justify-items: end;
+  gap: 0.4em;
+}
+
+.totaal__getal {
+  color: var(--merk);
+  font-size: clamp(2.4rem, 5vw, 5.5rem);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+}
+
+.totaal__label {
+  color: var(--tekst-zacht);
+  font-size: clamp(0.75rem, 1.2vw, 1.15rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Grafiek ------------------------------------------------------------ */
+
+.grafiek {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: clamp(10px, 1.6vw, 28px);
+  min-height: 0;
+}
+
+.grafiek__melding {
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  max-width: 32ch;
+  color: var(--tekst-zacht);
+  font-size: clamp(1.1rem, 2.2vw, 2rem);
+  text-align: center;
+}
+
+.kolom {
+  --aandeel: 0;
+  --rang: 0;
+
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  order: var(--rang, 0);
+}
+
+.kolom__plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--kop-ruimte);
+  border-bottom: 2px solid var(--lijn-sterk);
+}
+
+/* De balk is altijd even hoog als het plot; clip-path bepaalt hoeveel zichtbaar is.
+   Daardoor loopt het kleurverloop over de volle hoogte, zoals bij een echte meter. */
+.kolom__balk {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    var(--meter-groen) 0 58%,
+    var(--meter-geel) 58% 82%,
+    var(--meter-rood) 82% 100%
+  );
+  -webkit-mask-image: repeating-linear-gradient(
+    to top,
+    #000 0 calc(var(--segment) - var(--spleet)),
+    transparent calc(var(--segment) - var(--spleet)) var(--segment)
+  );
+  mask-image: repeating-linear-gradient(
+    to top,
+    #000 0 calc(var(--segment) - var(--spleet)),
+    transparent calc(var(--segment) - var(--spleet)) var(--segment)
+  );
+  clip-path: inset(calc(100% - var(--aandeel) * 1%) 0 0 0);
+  transition: clip-path 0.9s var(--ease);
+}
+
+.kolom__top {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--aandeel) * 1%);
+  left: 0;
+  display: grid;
+  justify-items: center;
+  gap: clamp(4px, 0.8vh, 10px);
+  padding-bottom: clamp(6px, 1vh, 12px);
+  transition: bottom 0.9s var(--ease);
+}
+
+.kolom__waarde {
+  font-size: clamp(1.6rem, 3.8vw, 4.5rem);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.kolom__foto {
+  --afmeting: clamp(48px, 9vh, 120px);
+
+  width: var(--afmeting);
+  height: var(--afmeting);
+  border: 3px solid var(--lijn-sterk);
+  border-radius: 50%;
+  background: #fff var(--foto, none) center / cover no-repeat;
+}
+
+.kolom__label {
+  padding-top: clamp(8px, 1.4vh, 16px);
+  text-align: center;
+}
+
+.kolom__rang {
+  display: block;
+  color: var(--tekst-vaag);
+  font-size: clamp(0.7rem, 1.1vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.kolom__naam {
+  font-size: clamp(0.95rem, 1.8vw, 2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.kolom--leider .kolom__waarde,
+.kolom--leider .kolom__rang { color: var(--merk); }
+.kolom--leider .kolom__foto { border-color: var(--merk); }
+
+/* Voet --------------------------------------------------------------- */
+
+.bord__voet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--tekst-vaag);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.6s;
+}
+
+.scherm--inactief { cursor: none; }
+.scherm--inactief .bord__voet { opacity: 0; }
+
+/* Gif bij een score -------------------------------------------------- */
+
+.gif {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgb(5 7 10 / 0.72);
+  pointer-events: none;
+}
+
+.gif__kaart {
+  display: grid;
+  justify-items: center;
+  gap: clamp(10px, 2vh, 24px);
+}
+
+.gif--binnen .gif__kaart { animation: gif-in 0.45s var(--ease); }
+.gif--uit .gif__kaart { animation: gif-uit 0.3s ease-in forwards; }
+
+.gif__beeld {
+  width: auto;
+  max-width: 92vw;
+  height: 72vh;
+  border-radius: var(--straal-l);
+  background: #000;
+  box-shadow: var(--schaduw-pop);
+  object-fit: contain;
+}
+
+.gif__onderschrift {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  color: #fff;
+  font-size: clamp(2rem, 5vw, 5.5rem);
+  font-weight: 800;
+  font-stretch: 75%;
+  line-height: 1;
+}
+
+.gif__punten {
+  color: var(--merk);
+  font-stretch: 62%;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes gif-in {
+  from { opacity: 0; transform: scale(0.92); }
+}
+
+@keyframes gif-uit {
+  to { opacity: 0; transform: scale(0.96); }
+}

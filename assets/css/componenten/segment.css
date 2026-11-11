@@ -1,0 +1,37 @@
+.segment {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--lijn-sterk);
+  border-radius: calc(var(--straal) + 3px);
+  background: var(--verhoogd);
+}
+
+.segment__optie {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  min-height: 52px;
+  padding: var(--ruimte-2) var(--ruimte-3);
+  border: 0;
+  border-radius: var(--straal);
+  background: none;
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  transition: background var(--tijd), color var(--tijd);
+}
+.segment__optie:hover { color: var(--tekst); }
+.segment__optie[aria-pressed="true"] {
+  background: var(--merk);
+  color: var(--merk-tekst);
+}
+.segment__uitleg {
+  font-size: var(--tekst-xs);
+  font-weight: 500;
+  opacity: 0.85;
+}

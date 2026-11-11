@@ -1,227 +1,53 @@
 <!doctype html>
-<html lang="nl">
+<html lang="nl" data-thema="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tapteller – klassement</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍻</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<style>
-body{overflow:hidden}
-.scherm{height:100%;padding:3vh 4vw 2vh;display:flex;flex-direction:column}
-header{display:flex;align-items:flex-end;justify-content:space-between;gap:2vw}
-.kop{display:flex;align-items:flex-end;gap:2.4vw;min-width:0}
-.kop img{display:block;height:clamp(70px,16vh,190px);width:auto;max-width:40vw;object-fit:contain}
-.kop .tekst{font-family:"Big Shoulders Display",Impact,sans-serif;font-size:clamp(1.4rem,3vw,3.2rem);font-weight:800;color:var(--muted);line-height:1}
-h1{font-size:clamp(2.4rem,6.5vw,7rem);line-height:.85;margin:0;font-weight:900}
-.total{text-align:right}
-.total .num{font-size:clamp(2.4rem,6vw,6.5rem);font-weight:900;line-height:.85;font-variant-numeric:tabular-nums;color:var(--accent)}
-.total div:last-child{color:var(--muted);font-size:clamp(.9rem,1.4vw,1.4rem)}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="style-src 'self'; object-src 'none'; base-uri 'self'">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b0d11">
+  <title>Tapteller – klassement</title>
 
-/* vertical bar chart */
-.chart{flex:1;min-height:0;display:flex;align-items:stretch;gap:clamp(8px,1.6vw,28px);margin-top:4vh;border-bottom:4px solid var(--line)}
-.col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;position:relative}
-.col .c{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;text-align:center;font-size:clamp(1.6rem,4vw,5rem);line-height:1;margin-bottom:.8vh;font-variant-numeric:tabular-nums}
-.col .foto{width:min(100%,clamp(56px,9vh,130px));aspect-ratio:1;margin:0 auto .8vh;border-radius:50%;background:#fff center/cover no-repeat;border:4px solid var(--bar);flex:none}
-.col.lead .foto{border-color:var(--accent)}
-.col .foto.geen{display:none}
-/* geluidsmeter: kleur hangt vast aan de hoogte van de grafiek, dus hoe hoger de balk, hoe roder */
-.col .bar{
-  height:0;min-height:6px;border-radius:10px 10px 0 0;
-  transition:height .9s cubic-bezier(.2,.9,.2,1);
-  background-image:
-    repeating-linear-gradient(to top, transparent 0 calc(var(--seg) - var(--gap)), var(--bg) calc(var(--seg) - var(--gap)) var(--seg)),
-    linear-gradient(to top, #22C55E 0%, #84CC16 30%, #FACC15 55%, #F97316 75%, #EF4444 90%, #DC2626 100%);
-  background-size:100% var(--meter-h,60vh);
-  background-position:bottom;
-  background-repeat:no-repeat;
-}
-.chart{--seg:clamp(14px,2.4vh,26px);--gap:clamp(3px,.5vh,5px)}
-.col.lead .c{color:var(--accent)}
-.col.flash .bar{animation:flash 1s ease-out}
-@keyframes flash{0%{filter:brightness(1.6)}100%{filter:none}}
-.names{display:flex;gap:clamp(8px,1.6vw,28px);padding-top:1.4vh}
-.names div{flex:1 1 0;min-width:0;text-align:center;font-weight:700;font-size:clamp(.9rem,1.8vw,2.1rem);line-height:1.1;overflow-wrap:anywhere}
-.names .rank{display:block;color:var(--muted);font-weight:600;font-size:.7em}
-.names .lead .rank{color:var(--accent)}
-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2vh;color:var(--muted)}
-footer button{background:transparent;border:2px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--muted)}
-/* gif bij elke score */
-.gif-overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(10,16,48,.55);pointer-events:none}
-.gif-kaart{display:flex;flex-direction:column;align-items:center;gap:2vh;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
-.gif-kaart img{display:block;height:75vh;width:auto;max-width:92vw;object-fit:contain;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5);background:#000}
-.gif-tekst{display:flex;align-items:baseline;gap:1.5vw;font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.6)}
-.gif-tekst span{font-size:clamp(2rem,5vw,5.5rem)}
-.gif-tekst b{font-size:clamp(2.4rem,6vw,6.5rem);color:var(--accent)}
-.gif-overlay.weg .gif-kaart{animation:weg .3s ease-in forwards}
-@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
-@keyframes weg{to{transform:scale(.85);opacity:0}}
-.leeg{margin:auto;font-size:clamp(1.2rem,2.4vw,2rem);color:var(--muted);text-align:center;max-width:30ch}
-</style>
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preload" href="assets/fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/scherm.css">
 </head>
-<body>
-<main class="scherm">
-  <header>
-    <div class="kop">
-      <img id="logo" alt="">
-      <span class="tekst hidden" id="evenement"></span>
-      <h1>Klassement</h1>
-    </div>
-    <div class="total"><div class="num" id="total">0</div><div>punten in totaal</div></div>
-  </header>
-  <div class="chart" id="chart"></div>
-  <div class="names" id="names"></div>
-  <footer>
-    <span id="clock"></span>
-    <button id="fsBtn">Volledig scherm</button>
-  </footer>
-</main>
+<body class="scherm">
+  <main class="bord">
+    <header class="bord__kop">
+      <div class="merk">
+        <img class="merk__logo" id="logo" alt="" hidden>
+        <div>
+          <p class="merk__evenement" id="evenement" hidden></p>
+          <h1 class="merk__titel" id="titel">Klassement</h1>
+        </div>
+      </div>
+      <p class="totaal">
+        <span class="totaal__getal" id="totaal">0</span>
+        <span class="totaal__label">punten in totaal</span>
+      </p>
+    </header>
 
-<div class="gif-overlay hidden" id="gifOverlay" aria-live="polite">
-  <div class="gif-kaart">
-    <img id="gifImg" alt="">
-    <div class="gif-tekst"><span id="gifNaam"></span><b id="gifPlus"></b></div>
+    <section class="grafiek" id="grafiek" role="list" aria-label="Klassement"></section>
+
+    <footer class="bord__voet">
+      <time class="klok" id="klok"></time>
+      <button class="knop knop--spook knop--klein" id="volScherm" type="button">Volledig scherm</button>
+    </footer>
+  </main>
+
+  <div class="gif" id="gif" hidden aria-live="polite">
+    <figure class="gif__kaart">
+      <img class="gif__beeld" alt="">
+      <figcaption class="gif__onderschrift">
+        <span class="gif__naam"></span>
+        <span class="gif__punten"></span>
+      </figcaption>
+    </figure>
   </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import * as cfg from "./config.js";
-const { firebaseConfig } = cfg;
-
-const $logo = document.getElementById("logo");
-const $ev = document.getElementById("evenement");
-$ev.textContent = cfg.evenement || "";
-$logo.alt = cfg.evenement || "Logo";
-let logoUitDb = "";
-function toonTekst(){ $logo.classList.add("hidden"); $ev.classList.remove("hidden"); }
-function toonLogo(src){ $ev.classList.add("hidden"); $logo.classList.remove("hidden"); $logo.src = src; }
-$logo.onerror = () => {
-  // logo uit de database kapot? probeer het bestand uit config.js, anders tekst
-  if (logoUitDb && $logo.src.startsWith("data:") && cfg.logo) { logoUitDb = ""; toonLogo(cfg.logo); }
-  else toonTekst();
-};
-function zetLogo(){
-  if (logoUitDb) toonLogo(logoUitDb);
-  else if (cfg.logo) toonLogo(cfg.logo);
-  else toonTekst();
-}
-zetLogo();
-const $chart = document.getElementById("chart");
-// zet de hoogte van de grafiek als CSS-variabele, zodat het kleurverloop over de hele hoogte loopt
-new ResizeObserver(() => $chart.style.setProperty("--meter-h", $chart.clientHeight + "px")).observe($chart);
-const $names = document.getElementById("names");
-let vorige = {};
-
-// ---------- gif bij elke score ----------
-const GIF_DUUR = 3500;          // hoelang een gif op het scherm blijft (ms)
-let gifs = {};
-const wachtrij = [];
-let bezig = false;
-function speelGif(item){
-  wachtrij.push(item);
-  if (wachtrij.length > 4) wachtrij.splice(0, wachtrij.length - 4); // niet te ver achterop raken
-  if (!bezig) volgende();
-}
-function volgende(){
-  const item = wachtrij.shift();
-  const $o = document.getElementById("gifOverlay");
-  if (!item){ bezig = false; $o.classList.add("hidden"); return; }
-  bezig = true;
-  const oud = document.getElementById("gifImg");
-  const img = oud.cloneNode();           // nieuw element = gif start opnieuw vanaf het begin
-  img.src = item.src; img.alt = "Gif van " + item.naam;
-  oud.replaceWith(img);
-  document.getElementById("gifNaam").textContent = item.naam;
-  document.getElementById("gifPlus").textContent = "+" + item.plus;
-  $o.classList.remove("hidden", "weg");
-  const $k = $o.querySelector(".gif-kaart"); $k.style.animation = "none"; void $k.offsetWidth; $k.style.animation = "";
-  setTimeout(() => {
-    $o.classList.add("weg");
-    setTimeout(volgende, 300);
-  }, GIF_DUUR);
-}
-
-function render(groepen){
-  const lijst = Object.entries(groepen || {}).map(([id, g]) => ({ id, naam: g.naam || "?", aantal: g.aantal | 0, foto: typeof g.foto === "string" && g.foto.startsWith("data:image/") ? g.foto : "" }));
-  lijst.sort((a, b) => (b.aantal - a.aantal) || a.naam.localeCompare(b.naam));
-  document.getElementById("total").textContent = lijst.reduce((s, g) => s + g.aantal, 0);
-
-  if (!lijst.length){
-    $chart.innerHTML = '<p class="leeg">Nog geen groepen. Voeg ze toe via de adminpagina.</p>';
-    $names.textContent = ""; vorige = {}; return;
-  }
-  $chart.querySelector(".leeg")?.remove();
-
-  const max = Math.max(1, ...lijst.map(g => g.aantal));
-  const ruimte = lijst.some(g => g.foto) ? "17vh" : "7vh";
-  const bestaand = {};
-  $chart.querySelectorAll(".col").forEach(c => bestaand[c.dataset.id] = c);
-  $names.textContent = "";
-
-  lijst.forEach((g, i) => {
-    let col = bestaand[g.id];
-    if (!col){
-      col = document.createElement("div"); col.className = "col"; col.dataset.id = g.id;
-      col.innerHTML = '<div class="c"></div><div class="foto geen"></div><div class="bar"></div>';
-    }
-    delete bestaand[g.id];
-    const lead = i === 0 && g.aantal > 0;
-    col.classList.toggle("lead", lead);
-    col.querySelector(".c").textContent = g.aantal;
-    const f = col.querySelector(".foto");
-    if (g.foto && f.dataset.src !== g.foto){
-      f.style.backgroundImage = 'url("' + g.foto.replace(/"/g, "") + '")';
-      f.dataset.src = g.foto;
-    }
-    f.classList.toggle("geen", !g.foto);
-    const bar = col.querySelector(".bar");
-    // leave room for the number above the tallest bar
-    requestAnimationFrame(() => bar.style.height = `calc(${(g.aantal / max) * 100}% - ${ruimte})`);
-    if (vorige[g.id] !== undefined && g.aantal > vorige[g.id]){
-      col.classList.remove("flash"); void col.offsetWidth; col.classList.add("flash");
-      const src = gifs[g.id];
-      if (typeof src === "string" && (src.startsWith("data:image/gif") || src.startsWith("https://")))
-        speelGif({ src, naam: g.naam, plus: g.aantal - vorige[g.id] });
-    }
-    $chart.appendChild(col);
-
-    const n = document.createElement("div");
-    if (lead) n.className = "lead";
-    const r = document.createElement("span"); r.className = "rank"; r.textContent = "#" + (i + 1);
-    n.append(r, document.createTextNode(g.naam));
-    $names.appendChild(n);
-  });
-  Object.values(bestaand).forEach(c => c.remove());
-  vorige = Object.fromEntries(lijst.map(g => [g.id, g.aantal]));
-}
-
-try {
-  const db = getDatabase(initializeApp(firebaseConfig));
-  onValue(ref(db, "instellingen/logo"), s => {
-    const v = s.val();
-    logoUitDb = typeof v === "string" && v.startsWith("data:image/") ? v : "";
-    zetLogo();
-  }, () => {});
-  onValue(ref(db, "gifs"), s => { gifs = s.val() || {}; }, () => {});
-  onValue(ref(db, "groepen"), s => render(s.val()),
-    () => { $chart.innerHTML = '<p class="leeg">Geen verbinding met de database. Controleer config.js en de regels.</p>'; });
-} catch (e) {
-  $chart.innerHTML = '<p class="leeg">Firebase is nog niet ingesteld. Vul config.js in.</p>';
-}
-
-const tick = () => document.getElementById("clock").textContent =
-  new Date().toLocaleTimeString("nl-BE", { hour: "2-digit", minute: "2-digit" });
-tick(); setInterval(tick, 15000);
-
-document.getElementById("fsBtn").onclick = () => {
-  if (document.fullscreenElement) document.exitFullscreen();
-  else document.documentElement.requestFullscreen?.().catch(() => {});
-};
-</script>
+  <script type="module" src="assets/js/scherm/main.js"></script>
 </body>
 </html>

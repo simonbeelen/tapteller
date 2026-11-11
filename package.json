@@ -1,0 +1,15 @@
+{
+  "name": "tapteller",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kassa en live klassement voor fuiven en evenementen.",
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "test": "node --test \"tests/unit/*.test.js\" \"tests/lint/*.test.js\"",
+    "test:e2e": "node tests/e2e/uitvoeren.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}

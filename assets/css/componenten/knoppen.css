@@ -1,0 +1,64 @@
+.knop {
+  --kn-achtergrond: var(--vlak);
+  --kn-tekst: var(--tekst);
+  --kn-rand: var(--lijn-sterk);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ruimte-2);
+  min-height: 44px;
+  padding: 0 var(--ruimte-4);
+  border: 1px solid var(--kn-rand);
+  border-radius: var(--straal);
+  background: var(--kn-achtergrond);
+  color: var(--kn-tekst);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--tijd), border-color var(--tijd), transform var(--tijd);
+}
+
+.knop:hover { --kn-achtergrond: var(--vlak-hover); }
+.knop:active { transform: translateY(1px); }
+.knop:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.knop--primair {
+  --kn-achtergrond: var(--merk);
+  --kn-tekst: var(--merk-tekst);
+  --kn-rand: transparent;
+}
+.knop--primair:hover { --kn-achtergrond: var(--merk-hover); }
+
+.knop--spook { --kn-achtergrond: transparent; }
+.knop--spook:hover { --kn-achtergrond: var(--vlak); }
+
+.knop--gevaar { --kn-tekst: var(--gevaar); }
+
+.knop--klein {
+  min-height: 36px;
+  padding: 0 var(--ruimte-3);
+  font-size: var(--tekst-xs);
+}
+
+.knop--icoon {
+  width: 44px;
+  padding: 0;
+}
+.knop--icoon.knop--klein { width: 36px; }
+
+.knop--blok { width: 100%; }
+
+.tekstknop {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tekst-zacht);
+  font-size: var(--tekst-s);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tekstknop:hover { color: var(--tekst); }
